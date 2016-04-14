@@ -54,6 +54,7 @@ module Billy
 
       if Billy.config.persist_cache
         Dir.mkdir(Billy.config.cache_path) unless File.exist?(Billy.config.cache_path)
+        Dir.mkdir(current_cache_path) unless File.exist?(current_cache_path)
 
         begin
           File.open(cache_file(key), 'w') do |f|
@@ -74,9 +75,9 @@ module Billy
       merge_cached_response_key = _merge_cached_response_key(orig_url)
       url = Addressable::URI.parse(format_url(orig_url, ignore_params))
       key = if merge_cached_response_key
-              method + '_' + Digest::SHA1.hexdigest(scope.to_s + merge_cached_response_key)
+              method + '_' + Digest::SHA1.hexdigest(merge_cached_response_key)
             else
-              method + '_' + url.host + '_' + Digest::SHA1.hexdigest(scope.to_s + url.to_s)
+              method + '_' + url.host + '_' + Digest::SHA1.hexdigest(url.to_s)
             end
       body_msg = ''
 
@@ -115,7 +116,7 @@ module Billy
     end
 
     def cache_file(key)
-      File.join(Billy.config.cache_path, "#{key}.yml")
+      File.join(Billy.config.cache_path, scope.to_s, "#{key}.yml")
     end
 
     def scope_to(new_scope = nil)
@@ -133,6 +134,10 @@ module Billy
 
     def use_default_scope
       scope_to nil
+    end
+
+    def current_cache_path
+      File.join(Billy.config.cache_path, scope.to_s)
     end
 
     private
